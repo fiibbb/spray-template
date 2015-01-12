@@ -1,6 +1,7 @@
 package com.example
 
-import akka.actor.Actor
+import akka.actor.{Props, Actor}
+import akka.io.Tcp.Connected
 import spray.routing._
 import spray.http._
 import MediaTypes._
@@ -16,7 +17,17 @@ class MyServiceActor extends Actor with MyService {
   // this actor only runs our route, but you could add
   // other things here, like request stream processing
   // or timeout handling
-  def receive = runRoute(myRoute)
+  def receive = {
+    case c:Connected => {
+      println("received http request")
+      demoService1Actor ! c
+    }
+    case s:String => {
+      println("received string"+s)
+    }
+  }
+
+  val demoService1Actor = context.actorOf(Props[DemoService1Actor], "demo-service-1")
 }
 
 
@@ -35,6 +46,11 @@ trait MyService extends HttpService {
             </html>
           }
         }
+      }
+    } ~
+    path("demo-service-1") {
+      get {
+        complete("PONG")
       }
     }
 }
